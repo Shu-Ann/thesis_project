@@ -432,7 +432,6 @@ ftPframes=[fetch_1_P, fetch_2_P, fetch_3_P, fetch_4_P]
 pepper_R=pd.concat(ppRframes)
 pepper_P=pd.concat(ppPframes)
 
-
 fetch_R=pd.concat(ftRframes)
 fetch_P=pd.concat(ftPframes)
 
@@ -442,16 +441,26 @@ allPframes=[pepper_1_P, pepper_2_P, pepper_3_P, pepper_4_P, fetch_1_P, fetch_2_P
 all_R=pd.concat(allRframes)
 all_P=pd.concat(allPframes)
 
-# ------------ reset index ------------------
-pepper_1 = pepper_1.reset_index(drop=True)
-pepper_2 = pepper_2.reset_index(drop=True)
-pepper_3 = pepper_3.reset_index(drop=True)
-pepper_4 = pepper_4.reset_index(drop=True)
+pepper_1_merge=pd.concat([pepper_1_R, pepper_1_P])
+pepper_2_merge=pd.concat([pepper_2_R, pepper_2_P])
+pepper_3_merge=pd.concat([pepper_3_R, pepper_3_P])
+pepper_4_merge=pd.concat([pepper_4_R, pepper_4_P])
 
-fetch_1 = fetch_1.reset_index(drop=True)
-fetch_2 = fetch_2.reset_index(drop=True)
-fetch_3 = fetch_3.reset_index(drop=True)
-fetch_4 = fetch_4.reset_index(drop=True)
+fetch_1_merge=pd.concat([fetch_1_R, fetch_1_P])
+fetch_2_merge=pd.concat([fetch_2_R, fetch_2_P])
+fetch_3_merge=pd.concat([fetch_3_R, fetch_3_P])
+fetch_4_merge=pd.concat([fetch_4_R, fetch_4_P])
+
+# ------------ reset index ------------------
+pepper_1_merge = pepper_1_merge.reset_index(drop=True)
+pepper_2_merge = pepper_2_merge.reset_index(drop=True)
+pepper_3_merge = pepper_3_merge.reset_index(drop=True)
+pepper_4_merge = pepper_4_merge.reset_index(drop=True)
+
+fetch_1_merge = fetch_1_merge.reset_index(drop=True)
+fetch_2_merge = fetch_2_merge.reset_index(drop=True)
+fetch_3_merge = fetch_3_merge.reset_index(drop=True)
+fetch_4_merge = fetch_4_merge.reset_index(drop=True)
 
 pepper_R = pepper_R.reset_index(drop=True)
 pepper_P = pepper_P.reset_index(drop=True)
@@ -483,15 +492,15 @@ fetch_3_P = fetch_3_P.reset_index(drop=True)
 fetch_4_P = fetch_4_P.reset_index(drop=True)
 
 # -------- save files --------------
-pepper_1.to_csv('./data/processed/pepper_1_merge.csv')
-pepper_2.to_csv('./data/processed/pepper_2_merge.csv')
-pepper_3.to_csv('./data/processed/pepper_3_merge.csv')
-pepper_4.to_csv('./data/processed/pepper_4_merge.csv')
+pepper_1_merge.to_csv('./data/processed/pepper_1_merge.csv')
+pepper_2_merge.to_csv('./data/processed/pepper_2_merge.csv')
+pepper_3_merge.to_csv('./data/processed/pepper_3_merge.csv')
+pepper_4_merge.to_csv('./data/processed/pepper_4_merge.csv')
 
-fetch_1.to_csv('./data/processed/fetch_1_merge.csv')
-fetch_2.to_csv('./data/processed/fetch_2_merge.csv')
-fetch_3.to_csv('./data/processed/fetch_3_merge.csv')
-fetch_4.to_csv('./data/processed/fetch_4_merge.csv')
+fetch_1_merge.to_csv('./data/processed/fetch_1_merge.csv')
+fetch_2_merge.to_csv('./data/processed/fetch_2_merge.csv')
+fetch_3_merge.to_csv('./data/processed/fetch_3_merge.csv')
+fetch_4_merge.to_csv('./data/processed/fetch_4_merge.csv')
 
 pepper_R.to_csv('./data/processed/pepper_R.csv')
 pepper_P.to_csv('./data/processed/pepper_P.csv')
