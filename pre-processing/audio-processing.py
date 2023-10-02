@@ -1,6 +1,10 @@
 import pandas as pd
 from pydub import AudioSegment
 
+'''
+split audio data based on combined start/end time from workshops
+'''
+
 # read files
 pepper_1=pd.read_csv('./data/processed/pepper_1_merge.csv')
 pepper_2=pd.read_csv('./data/processed/pepper_2_merge.csv')
@@ -39,10 +43,10 @@ for c in range(0, len(csv_list)):
     chunk_data = audio[start[i]*1000:end[i]*1000]
     if csv_list[c]['Role'][i]=='R':
           chunk_data.export('./data/audio/seg_R/'+csv_name[c]+'_R_audio'+str(i)+'.wav', format="wav")
-          csv_list[c]['file_name'][i]=csv_name[c]+'_R_audio'+str(i)+'.wav'
+          csv_list[c]['file_name'][i]=csv_name[c]+'_R_audio'+str(i)
     elif csv_list[c]['Role'][i]=='P':
           chunk_data.export('./data/audio/seg_P/'+csv_name[c]+'_P_audio'+str(i)+'.wav', format="wav")
-          csv_list[c]['file_name'][i]=csv_name[c]+'_P_audio'+str(i)+'.wav'
+          csv_list[c]['file_name'][i]=csv_name[c]+'_P_audio'+str(i)
 
 pepper_1_R=pepper_1[pepper_1['Role']=='R']
 pepper_1_P=pepper_1[pepper_1['Role']=='P']
@@ -88,4 +92,12 @@ fetch_2_P.to_csv('./data/audio/fetch_2_P_audio.csv')
 fetch_3_P.to_csv('./data/audio/fetch_3_P_audio.csv')
 fetch_4_P.to_csv('./data/audio/fetch_4_P_audio.csv')
 
-          
+allRframes=[pepper_1_R, pepper_2_R, pepper_3_R, pepper_4_R, fetch_1_R, fetch_2_R, fetch_3_R, fetch_4_R]
+allPframes=[pepper_1_P, pepper_2_P, pepper_3_P, pepper_4_P, fetch_1_P, fetch_2_P, fetch_3_P, fetch_4_P]
+
+all_R=pd.concat(allRframes)
+all_P=pd.concat(allPframes)
+
+
+all_R.to_csv('./data/model_use/all_R.csv')
+all_P.to_csv('./data/model_use/all_P.csv')         
