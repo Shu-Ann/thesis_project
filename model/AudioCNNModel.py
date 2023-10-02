@@ -1,5 +1,5 @@
 '''
-pre-trained resnet-50
+pre-trained resnet-50 & resnet-152
 '''
 from torchvision.models import resnet50, resnet152
 from torch import nn

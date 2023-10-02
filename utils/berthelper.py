@@ -45,7 +45,7 @@ def create_text_loader(df, shuffle=True):
                       ,shuffle=shuffle)
 
 
-def train_epoch(model, train_dataloader, optimizer, scheduler, n_examples, step):
+def train_epoch(model, train_dataloader, optimizer, scheduler, n_train):
     model = model.train()
     losses = []
     correct_predictions = 0
@@ -68,15 +68,12 @@ def train_epoch(model, train_dataloader, optimizer, scheduler, n_examples, step)
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
-        if step == "batch":
-            scheduler.step()
-
         optimizer.zero_grad()
         process_bar.set_postfix(train_loss=loss.item())
 
-    return correct_predictions.double() / n_examples, np.mean(losses)
+    return correct_predictions.double() / n_train, np.mean(losses)
 
-def eval_model(model, val_dataloader, n_examples):
+def eval_model(model, val_dataloader, n_valid):
     model = model.eval()
 
     losses = []
@@ -99,7 +96,7 @@ def eval_model(model, val_dataloader, n_examples):
         losses.append(loss.item())
         process_bar.set_postfix(val_loss=loss.item())
 
-    return correct_predictions.double() / n_examples, np.mean(losses)
+    return correct_predictions.double() / n_valid, np.mean(losses)
 
 
 def get_predictions(model, test_data_loader):
