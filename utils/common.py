@@ -41,5 +41,5 @@ def report(y_test, y_pred, labels):
     print(classification_report(y_test, y_pred, target_names=labels))
 
 
-def saveModel(model, path, name):
-    torch.save(model, path+name)
+def saveModel(model, path):
+    torch.save(model, path)

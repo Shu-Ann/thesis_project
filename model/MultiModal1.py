@@ -1,40 +1,42 @@
 '''
-trained 80-20 text model + trained 80-20 resnet50 model
+trained 80-20 text model + trained 80-20 CNN model
 '''
 import torch.nn.functional as F
 import torch.nn as nn
 import torch
-from transformers import BertModel
 from torchvision.models import resnet50
 
 class Bert(nn.Module):
     
-  def __init__(self, n_classes):
+  def __init__(self, text_model_path):
     super(Bert, self).__init__()
-    self.bert = BertModel.from_pretrained('bert-base-cased')
-    self.out = nn.Linear(self.bert.config.hidden_size, n_classes)
+    self.bert = torch.load(text_model_path)
+    self.bert.load_state_dict(self.bert.state_dict())
 
   def forward(self, input_ids, attention_mask):
-    output= self.bert(input_ids=input_ids,attention_mask=attention_mask)
-    last_hidden_state = output.last_hidden_state
-    return last_hidden_state[:, 0, :]
+    output=self.bert(input_ids=input_ids,attention_mask=attention_mask)
+    return output
 
-class Resnet50(nn.Module):
+class Resnet152(nn.Module):
     
-  def __init__(self, n_classes):
-    super(Resnet50, self).__init__()
-    self.premodel = resnet50(weights="IMAGENET1K_V2")
-    modules=list(self.premodel.children())[:-1]
-    self.model=nn.Sequential(*modules)
-    self.fc=nn.Linear(2048, n_classes)
+  def __init__(self,audio_model_path):
+    super(Resnet152, self).__init__()
+    self.model = torch.load(audio_model_path)
 
   def forward(self, image):
     out = self.model(image)
-    output=out.flatten(1)
-    logits=self.fc(output)
-    # probas = F.softmax(logits, dim=1)
+    return out
 
-    return logits
+class Resnet50(nn.Module):
+    
+  def __init__(self,audio_model_path):
+    super(Resnet50, self).__init__()
+    self.model = torch.load(audio_model_path)
+
+  def forward(self, image):
+    out = self.model(image)
+
+    return out
 
 
 class AudioTextModel(nn.Module):
@@ -54,18 +56,17 @@ class AudioTextModel(nn.Module):
           param.requires_grad = False
 
         self.dropout = nn.Dropout(.5)
-        self.fc1 = nn.Linear(8960,1200)
-        self.fc2 = nn.Linear(1200,600)
-        self.fc3 = nn.Linear(600,300)
-        self.fc4 = nn.Linear(300,num_classes)
+        self.fc = nn.Linear(2816,num_classes)
 
     def forward(self,input_ids,attention_mask, audio):
-        outputs_text=self.text_model(input_ids, attention_mask)
+        output=self.text_model(input_ids, attention_mask)
+        last_hidden_state = output.last_hidden_state
+        outputs_text=last_hidden_state[:, 0, :]
+
         outputs_audio=self.audio_model(audio)
         outputs_audio=outputs_audio.flatten(1)
+
         concat_embded=torch.cat((outputs_text,outputs_audio),1)
-        l1 = self.fc1(self.dropout(concat_embded))
-        l2 = self.fc2(l1)
-        l3 = self.fc3(l2)
-        preds = self.fc4(l3)
+        preds = self.fc(self.dropout(concat_embded))
+
         return preds

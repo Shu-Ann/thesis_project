@@ -44,7 +44,7 @@ def create_audio_loader(df, img_dir, shuffle=True):
                     ,shuffle=shuffle)
 
     
-def train_epoch(model, train_dataloader, optimizer, scheduler,n_train,step):
+def train_epoch(model, train_dataloader, optimizer,n_train):
     model = model.train() # puts the model in training mode
     correct=0
     running_loss = 0.0
@@ -70,19 +70,18 @@ def train_epoch(model, train_dataloader, optimizer, scheduler,n_train,step):
 
 def eval_model(model, val_dataloader, n_valid):
     model=model.eval() # puts the model in validation mode
-    with torch.no_grad():
-        loss_val = 0.0
-        correct_val = 0
+    loss_val = 0.0
+    correct_val = 0
     process_bar = tqdm(val_dataloader)
-    for data in process_bar:
-        batch, labels = data
-        batch, labels = batch.to(config.device), labels.to(config.device)
-        logits, probas = model(batch)
-        loss = config.loss_fn(logits, labels)
-        _, predicted = torch.max(logits, 1)
-        correct_val += (predicted == labels).sum().item()
-        loss_val += loss.item()
-        process_bar.set_postfix(val_loss=loss.item())
+    for batch in process_bar:
+      targets = batch["target"].to(config.device)
+      audio=batch['image'].to(config.device)
+      logits, probas = model(audio)
+      loss = config.loss_fn(logits, targets)
+      _, predicted = torch.max(logits, 1)
+      correct_val += (predicted == targets).sum().item()
+      loss_val += loss.item()
+      process_bar.set_postfix(val_loss=loss.item())
     avg_loss_val = loss_val / n_valid
     avg_acc_val = correct_val /n_valid
 
@@ -92,19 +91,19 @@ def get_predictions(model, test_dataloader):
   model=model.eval()
   predictions=[]
   real_values=[]
-  with torch.no_grad():
-    for batch in tqdm(test_dataloader):
-      targets = batch["target"].to(config.device)
-      audio=batch['image'].to(config.device)
+  
+  for batch in tqdm(test_dataloader):
+    targets = batch["target"].to(config.device)
+    audio=batch['image'].to(config.device)
 
-      logits, probas = model(audio)
-      _, predicted_labels = torch.max(probas, 1)
+    logits, probas = model(audio)
+    _, predicted_labels = torch.max(probas, 1)
 
-      predictions.extend(predicted_labels)
-      real_values.extend(targets)
+    predictions.extend(predicted_labels)
+    real_values.extend(targets)
 
-    predictions = torch.stack(predictions).cpu()
-    real_values = torch.stack(real_values).cpu()
+  predictions = torch.stack(predictions).cpu()
+  real_values = torch.stack(real_values).cpu()
 
-    return predictions, real_values
+  return predictions, real_values
 

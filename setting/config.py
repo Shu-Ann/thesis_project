@@ -34,6 +34,9 @@ R_labels=['introduction', 'clarification','workshop management', 'implementation
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #batch size
 batch_size = 16
+
+# loss function
+loss_fn = nn.CrossEntropyLoss().to(device)
 # -------------------- text --------------------
 # tokenizer/ bert model
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
@@ -45,15 +48,18 @@ max_length=256
 epoch = 20
 patience = 2
 factor = 0.5
-# loss function
-loss_fn = nn.CrossEntropyLoss().to(device)
+
 
 # -------------------- ResNet--------------------
 
-res_lr = 0.001
+# transformers
 transformers = transforms=A.Compose(
             [A.Resize(255, 255, always_apply=True),
              A.Normalize(max_pixel_value=255.0, always_apply=True)])
+
+res_lr = 0.001
+res152_factor=0.3
+
 
 # -------------------- Multi--------------------
 

@@ -13,7 +13,7 @@ if config.role =='r':
     labels=config.R_labels
     n_train=len(config.train_r)
     n_valid=len(config.valid_r)
-    
+
     if config.mode == "text":
         train_dataloader = create_text_loader(config.train_r, shuffle=True)
         val_dataloader = create_text_loader(config.valid_r, shuffle=False)
@@ -56,7 +56,7 @@ elif config.role=='p':
 
 # main
 if __name__ == '__main__':
-    train.start_train(config,train_dataloader, val_dataloader,test_dataloader, labels, n_train, n_valid, path)
+    train.single_train(config,train_dataloader, val_dataloader,test_dataloader, labels, n_train, n_valid, path)
 
 
 

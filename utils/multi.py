@@ -42,7 +42,7 @@ class MultiDataSet(Dataset):
       return len(self.text)
     
 
-def create_multi_loader(df, img_dir, shuffle=True):
+def create_multi_loader(df, img_dir, shuffle):
     ds = MultiDataSet(text=df['text'].values,
                       target=df['index'].values,
                       img_names= df['file_name'].values,
@@ -55,60 +55,79 @@ def create_multi_loader(df, img_dir, shuffle=True):
                       ,shuffle=shuffle)
     
 
-def train_epoch(model, trainloader, loss_fn, optimizer, device, scheduler, n_examples):
+def train_epoch(model, train_dataloader, optimizer, n_train):
     model=model.train()
-    model = model.to(device)
 
     losses=[]
     correct_predictions = 0
-
-    for batch in tqdm(trainloader):
+    process_bar = tqdm(train_dataloader)
+    for batch in process_bar:
         optimizer.zero_grad()
-        label=batch['label'].to(device)
-        input_ids = batch["input_ids"].to(device)
-        attention_mask = batch["attention_mask"].to(device)
-        audio=batch['image'].to(device)
+        targets=batch['target'].to(config.device)
+        input_ids = batch["input_ids"].to(config.device)
+        attention_mask = batch["attention_mask"].to(config.device)
+        audio=batch['image'].to(config.device)
 
         output = model(input_ids,attention_mask,audio)
         _, preds = torch.max(output, dim=1)
-        loss = loss_fn(output, label)
+        loss = config.loss_fn(output, targets)
 
-        correct_predictions += torch.sum(preds == label)
+        correct_predictions += torch.sum(preds == targets)
         losses.append(loss.item())
 
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
-        scheduler.step()
+        process_bar.set_postfix(train_loss=loss.item())
 
-    return correct_predictions.double() / n_examples, np.mean(losses)
+    return correct_predictions.double() / n_train, np.mean(losses)
 
 
-def get_predictions(model, device, testloader):
+def eval_model(model, val_dataloader, n_valid):
+    model=model.eval() # puts the model in validation mode
+    loss_val = 0.0
+    correct_val = 0
+    process_bar = tqdm(val_dataloader)
+    for batch in process_bar:
+      input_ids = batch["input_ids"].to(config.device)
+      attention_mask = batch["attention_mask"].to(config.device)
+      targets = batch["target"].to(config.device)
+      audio=batch['image'].to(config.device)
+
+      outputs = model(input_ids,attention_mask,audio)
+      loss = config.loss_fn(outputs, targets)
+      _, preds = torch.max(outputs, dim=1)
+
+      correct_val += (preds == targets).sum().item()
+      loss_val += loss.item()
+
+      process_bar.set_postfix(val_loss=loss.item())
+    
+    avg_loss_val = loss_val / n_valid
+    avg_acc_val = correct_val /n_valid
+
+    return avg_acc_val,avg_loss_val
+
+def get_predictions(model, testloader):
     model=model.eval()
-    model=model.to(device)
 
     predictions = []
     real_values = []
+    for d in testloader:
+        input_ids = d["input_ids"].to(config.device)
+        attention_mask = d["attention_mask"].to(config.device)
+        label = d["target"].to(config.device)
+        audio=d['image'].to(config.device)
 
-    with torch.no_grad():
-        for d in testloader:
-            input_ids = d["input_ids"].to(device)
-            attention_mask = d["attention_mask"].to(device)
-            label = d["label"].to(device)
-            audio=d['image'].to(device)
+        outputs = model(
+            input_ids,attention_mask,audio
+        )
+        _, preds = torch.max(outputs, dim=1)
 
-            outputs = model(
-                input_ids,attention_mask,audio
-            )
-            _, preds = torch.max(outputs, dim=1)
+        probs = F.softmax(outputs, dim=1)
 
-            probs = F.softmax(outputs, dim=1)
-
-
-            predictions.extend(preds)
-
-            real_values.extend(label)
+        predictions.extend(preds)
+        real_values.extend(label)
 
     predictions = torch.stack(predictions).cpu()
     real_values = torch.stack(real_values).cpu()

@@ -1,5 +1,5 @@
 '''
-trained 80-20 text model + trained 80-20 resnet152 model
+text & image models from pretrained BERT & resnet152 
 '''
 import torch.nn.functional as F
 import torch.nn as nn
@@ -9,10 +9,10 @@ from torchvision.models import resnet152
 
 class Bert(nn.Module):
     
-  def __init__(self, n_classes):
+  def __init__(self):
     super(Bert, self).__init__()
     self.bert = BertModel.from_pretrained('bert-base-cased')
-    self.out = nn.Linear(self.bert.config.hidden_size, n_classes)
+  
 
   def forward(self, input_ids, attention_mask):
     output= self.bert(input_ids=input_ids,attention_mask=attention_mask)
@@ -33,32 +33,20 @@ class Resnet152(nn.Module):
     return out
 
 
-class AudioTextModel(nn.Module):
-    def __init__(self, num_classes, text_model_path, audio_model_path):
-        super(AudioTextModel, self).__init__()
+class AudioTextEncodeModel(nn.Module):
+    def __init__(self, num_classes):
+        super(AudioTextEncodeModel, self).__init__()
         self.num_classes=num_classes
-
-        self.text_model=torch.load(text_model_path)
-        self.audio_premodel=torch.load(audio_model_path)
-
-        # for param in self.text_model.parameters():
-        #   param.requires_grad = False
-        # for param in self.audio_model.parameters():
-        #   param.requires_grad = False
+        self.text_model=Bert()
+        self.audio_premodel=Resnet152()
 
         self.dropout = nn.Dropout(.5)
-        self.fc1 = nn.Linear(2816,1200)
-        self.fc2 = nn.Linear(1200,600)
-        self.fc3 = nn.Linear(600,300)
-        self.fc4 = nn.Linear(300,num_classes)
+        self.fc1 = nn.Linear(2816,num_classes)
 
     def forward(self,input_ids,attention_mask, audio):
         outputs_text=self.text_model(input_ids, attention_mask)
         outputs_audio=self.audio_premodel(audio)
         outputs_audio=outputs_audio.flatten(1)
         concat_embded=torch.cat((outputs_text,outputs_audio),1)
-        l1 = self.fc1(self.dropout(concat_embded))
-        l2 = self.fc2(l1)
-        l3 = self.fc3(l2)
-        preds = self.fc4(l3)
+        preds = self.fc1(self.dropout(concat_embded))
         return preds
